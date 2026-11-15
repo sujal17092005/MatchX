@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MatchX — Order Book Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#000;--c1:#0a0a0b;--c2:#131316;--ln:#202024;--tx:#ececee;--mu:#85858d;--g:#16c784;--r:#ea3943;--gs:rgba(22,199,132,.14);--rs:rgba(234,57,67,.14);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.m{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.up{color:var(--g)}.dn{color:var(--r)}.mu{color:var(--mu)}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+.nav{display:flex;align-items:center;gap:14px 24px;padding:12px 16px;border-bottom:1px solid var(--ln);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--c2);border:1px solid var(--ln);display:grid;place-items:center}
+.logo i{display:block;height:5px;border-radius:2px}.logo i:first-child{width:18px;background:var(--r);margin-bottom:3px}.logo i:last-child{width:22px;background:var(--g)}
+.brand b{font-size:19px;letter-spacing:-.01em}.brand span{display:block;font-size:11px;color:var(--mu);margin-top:-4px}
+.kpis{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+.kpi span{display:block;font-size:11px;color:var(--mu)}.kpi b{font-weight:500;font-size:14px}
+.ctrl{display:flex;align-items:center;gap:10px}
+.btn{background:var(--c2);border:1px solid var(--ln);border-radius:8px;padding:7px 13px;font-weight:500}
+.btn:hover{border-color:#3a3a40}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--g)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--g);box-shadow:0 0 0 3px var(--gs)}
+.live.off{color:var(--mu)}.live.off i{background:var(--mu);box-shadow:none}
+input[type=range]{width:110px;accent-color:var(--g)}
+.app{display:grid;grid-template-columns:270px minmax(0,1fr) 330px;gap:12px;padding:12px 16px 24px;align-items:start}
+.col{display:grid;gap:12px;min-width:0}
+.card{background:var(--c1);border:1px solid var(--ln);border-radius:12px;padding:14px;min-width:0}
+.card h3{margin:0 0 10px;font-size:13px;font-weight:600}
+.wl{display:grid;grid-template-columns:1fr 64px auto;gap:10px;align-items:center;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:9px 10px}
+.wl:hover{background:var(--c2)}.wl[aria-pressed=true]{background:var(--c2);border-color:var(--ln)}
+.wl b{display:block;font-weight:600}.wl small{color:var(--mu)}.wl .r{text-align:right}
+.kv{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}.kv span{color:var(--mu)}
+.big{font-size:30px;font-weight:600;letter-spacing:-.02em}
+.hd{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;margin-bottom:6px}
+.hd .kpi{padding-bottom:4px}
+svg.chart{width:100%;height:auto;display:block}
+.empty{padding:70px 0;text-align:center;color:var(--mu)}
+.bk{display:grid;grid-template-columns:1fr 1fr 1fr;padding:3px 6px;position:relative;font-size:12.5px;cursor:pointer;border-radius:4px}
+.bk:hover{background:var(--c2)}.bk>*{position:relative}.bk span:not(:first-child){text-align:right}
+.bk i{position:absolute;right:0;top:0;bottom:0;border-radius:4px}
+.bk.a i{background:var(--rs)}.bk.b i{background:var(--gs)}
+.bk.h{color:var(--mu);font-size:11px;cursor:default}.bk.h:hover{background:none}
+.mid{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;margin:4px 0;border-block:1px solid var(--ln)}
+.mid b{font-size:18px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--c2);border-radius:9px;padding:3px;margin-bottom:12px}
+.seg button{border:0;background:transparent;border-radius:7px;padding:8px;font-weight:600;color:var(--mu)}
+.seg button[aria-pressed=true].b{background:var(--g);color:#000}.seg button[aria-pressed=true].s{background:var(--r);color:#fff}
+.f{display:block;margin-bottom:10px;font-size:12px;color:var(--mu)}
+.f input{display:block;width:100%;margin-top:4px;background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:9px 11px;font-size:14px}
+.f input:focus{border-color:var(--tx);outline:0}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-2px 0 12px}
+.chips button{background:var(--c2);border:1px solid var(--ln);border-radius:7px;padding:5px;font-size:12px;color:var(--mu)}
+.chips button:hover{color:var(--tx)}
+.go{width:100%;border:0;border-radius:9px;padding:12px;font-weight:600;font-size:15px;margin-top:6px}
+.go.b{background:var(--g);color:#000}.go.s{background:var(--r);color:#fff}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--ln);margin:-4px 0 10px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--mu);font-weight:500;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--tx);border-color:var(--g)}
+.wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #151518;white-space:nowrap}
+th{color:var(--mu);font-weight:500;position:sticky;top:0;background:var(--c1)}
+td input{width:86px;background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:4px 7px}
+.pill{padding:2px 8px;border-radius:99px;font-size:11px;background:var(--c2)}
+.note{color:var(--mu);font-size:12.5px;max-width:78ch}
+.bar{height:14px;border-radius:3px;margin:4px 0}
+.toast{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9;max-width:340px;padding:12px 16px;background:var(--c2);border:1px solid var(--ln);border-left:3px solid var(--g);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.toast.err{border-left-color:var(--r)}
+@media(max-width:1150px){.app{grid-template-columns:minmax(0,1fr) 320px}.col:first-child{grid-column:1/-1;grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.app{grid-template-columns:1fr;padding:10px}.col:first-child{grid-template-columns:1fr}.kpis{margin-left:0}.col:nth-child(3){order:-1}}
+.tape{overflow:hidden;border-bottom:1px solid var(--ln);background:var(--c1);white-space:nowrap}
+.tape>div{display:inline-block;padding:6px 0;animation:tp 200s linear infinite}
+.tape span{margin:0 16px;font-size:12px}
+@keyframes tp{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.tape>div{animation:none}}
+.search{width:100%;background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:8px 11px;margin-bottom:8px}
+.fl{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.fl button{background:var(--c2);border:1px solid var(--ln);border-radius:99px;padding:3px 11px;font-size:12px;color:var(--mu)}
+.fl button[aria-pressed=true]{color:var(--tx);border-color:var(--tx)}
+.list{max-height:560px;overflow-y:auto}
+.land{min-height:90vh;display:grid;place-items:center;padding:20px}
+.lc{max-width:440px;width:100%;padding:26px}
+.lc h2{margin:18px 0 4px;font-size:24px}.lc ul{padding-left:18px;color:var(--mu);margin:12px 0 20px}.lc li{margin:4px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:20;padding:16px}
+.mb{max-width:380px;width:100%;background:var(--c1);border:1px solid var(--ln);border-radius:14px;padding:20px}
+.mb h3{font-size:17px;margin:0 0 12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.seg button[aria-pressed=true].t{background:var(--c1);color:var(--tx)}
+.seg.sm{margin-bottom:10px}
+*{scrollbar-width:thin;scrollbar-color:#34343b transparent}
+@supports not (scrollbar-color:auto){
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2c2c32;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#4a4a52}
+::-webkit-scrollbar-corner{background:transparent}}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:#2a2a30;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--g);border:2px solid #000;box-shadow:0 0 0 1px var(--g)}
+input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:#2a2a30}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--g);border:2px solid #000;box-shadow:0 0 0 1px var(--g)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+"use strict";
+const {useState,useEffect,useRef,useReducer}=React, html=htm.bind(React.createElement);
+const f2=n=>n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2}), r2=n=>Math.round(n/0.05)*0.05;
+const RAW="RELIANCE,Reliance Industries,2900;TCS,Tata Consultancy,3900;HDFCBANK,HDFC Bank,1650;INFY,Infosys,1600;ICICIBANK,ICICI Bank,1200;HINDUNILVR,Hindustan Unilever,2400;ITC,ITC Ltd,440;SBIN,State Bank of India,780;BHARTIARTL,Bharti Airtel,1500;KOTAKBANK,Kotak Mahindra Bank,1750;LT,Larsen & Toubro,3500;AXISBANK,Axis Bank,1150;ASIANPAINT,Asian Paints,2900;MARUTI,Maruti Suzuki,12000;BAJFINANCE,Bajaj Finance,7000;HCLTECH,HCL Technologies,1700;SUNPHARMA,Sun Pharma,1650;TITAN,Titan Company,3400;ULTRACEMCO,UltraTech Cement,11000;WIPRO,Wipro,520;NESTLEIND,Nestle India,2500;ONGC,ONGC,270;NTPC,NTPC,380;POWERGRID,Power Grid,320;TATAMOTORS,Tata Motors,950;TATASTEEL,Tata Steel,150;MAHINDRA,Mahindra & Mahindra,2800;JSWSTEEL,JSW Steel,900;ADANIPORTS,Adani Ports,1350;COALINDIA,Coal India,450;BAJAJFINSV,Bajaj Finserv,1650;TECHM,Tech Mahindra,1450;GRASIM,Grasim,2600;CIPLA,Cipla,1500;DRREDDY,Dr. Reddy’s,6200;EICHERMOT,Eicher Motors,4800;HEROMOTOCO,Hero MotoCorp,4700;BRITANNIA,Britannia,5000;DIVISLAB,Divi’s Labs,5400;APOLLOHOSP,Apollo Hospitals,6500;HINDALCO,Hindalco,650;BPCL,BPCL,330;TATACONSUM,Tata Consumer,1100;SBILIFE,SBI Life,1500;HDFCLIFE,HDFC Life,650;INDUSINDBK,IndusInd Bank,1000;UPL,UPL Ltd,520;ZOMATO,Zomato,260;PAYTM,Paytm,700;DMART,Avenue Supermarts,4200;PIDILITE,Pidilite,3000;HAVELLS,Havells,1700;DABUR,Dabur,540;GAIL,GAIL,210;IOC,Indian Oil,160;VEDL,Vedanta,440;BANKBARODA,Bank of Baroda,250;PNB,Punjab National Bank,110;IRCTC,IRCTC,900;JIOFIN,Jio Financial,330";
+const SYMS={};RAW.split(";").forEach(r=>{const [s,n,p]=r.split(",");SYMS[s]={n,p:+p}});
+const KEYS=Object.keys(SYMS),CASH0=1000000,HOLD0=KEYS.filter((_,i)=>i%12===0);
+
+/* ===== Data structures ===== */
+class Heap{constructor(c){this.a=[];this.c=c}peek(){return this.a[0]}
+ push(x){const a=this.a,c=this.c;a.push(x);let i=a.length-1;while(i>0){const p=(i-1)>>1;if(c(a[i],a[p])<0){[a[i],a[p]]=[a[p],a[i]];i=p}else break}}
+ pop(){const a=this.a,c=this.c,t=a[0],l=a.pop();if(a.length){a[0]=l;let i=0;for(;;){let m=i,L=2*i+1,R=L+1;if(L<a.length&&c(a[L],a[m])<0)m=L;if(R<a.length&&c(a[R],a[m])<0)m=R;if(m===i)break;[a[i],a[m]]=[a[m],a[i]];i=m}}return t}}
+class Ring{constructor(n){this.b=new Array(n);this.i=0;this.n=0}add(x){this.b[this.i]=x;this.i=(this.i+1)%this.b.length;this.n=Math.min(this.n+1,this.b.length)}
+ newest(k){const o=[],L=this.b.length;for(let j=1;j<=Math.min(k,this.n);j++)o.push(this.b[(this.i-j+L)%L]);return o}}
+const bidC=(x,y)=>y.price-x.price||x.seq-y.seq, askC=(x,y)=>x.price-y.price||x.seq-y.seq;
+
+/* ===== Matching engine ===== */
+class Exchange{
+ constructor(){this.books={};this.bs={};this.vol={};for(const s of KEYS){this.books[s]={bids:new Heap(bidC),asks:new Heap(askC),last:SYMS[s].p};this.bs[s]=[];this.vol[s]=0}
+  this.orders=new Map();this.you=new Set();this.trades=[];this.audit=new Ring(2000);
+  this.alerts=[];this.yr=[];this.pend=0;this.nid=0;this.seq=0;this.acc=0;this.filled=0;this.rej=0;this.us=0;this.stamps=[];
+  this.cash=CASH0;this.hold={};this.cost={};for(const s of KEYS){this.hold[s]=0;this.cost[s]=0}
+  for(const s of HOLD0){const q=50+Math.floor(Math.random()*21);this.hold[s]=q;this.cost[s]=q*SYMS[s].p}this.w0=this.worth()}
+ worth(){return this.cash+KEYS.reduce((a,k)=>a+this.hold[k]*this.books[k].last,0)}
+ log(type,o,d){this.audit.add({t:new Date().toLocaleTimeString("en-GB"),type,id:o?o.id:"-",d})}
+ live(o){return o.status==="OPEN"||o.status==="PARTIAL"}
+ reserved(sym){let c=0,s=0;for(const id of this.you){const o=this.orders.get(id);if(o.side==="BUY")c+=o.price*o.rem;else if(o.sym===sym)s+=o.rem}return{c,s}}
+ submit(sym,side,price,qty,user,ioc){
+  const t=performance.now(),o={id:++this.nid,sym,side,price,qty,rem:qty,seq:++this.seq,status:"OPEN",user,t:Date.now()};let err=null;
+  if(!(price>0)||!(qty>0)||!Number.isInteger(qty))err="Enter a price above 0 and a whole-number quantity.";
+  else if(user==="YOU"){const rv=this.reserved(sym);
+   if(side==="BUY"&&this.cash-rv.c<price*qty)err="Not enough cash. Free cash is ₹"+f2(this.cash-rv.c)+".";
+   if(side==="SELL"&&this.hold[sym]-rv.s<qty)err="Not enough shares. Free shares: "+(this.hold[sym]-rv.s)+".";}
+  if(err){o.status="REJECTED";o.why=err;if(user==="YOU")this.yr.push(o);this.rej++;this.log("REJECTED",o,err);return{ok:false,err,o}}
+  this.orders.set(o.id,o);if(user==="YOU")this.you.add(o.id);this.acc++;
+  this.log("ACCEPTED",o,`${side} ${qty} ${sym} @ ${f2(price)}`);
+  this.match(o);
+  if(o.rem>0&&ioc){this.done(o,"CANCELLED");this.log("CANCELLED",o,`market order: ${o.rem} unfilled`)}
+  else if(o.rem>0){const b=this.books[sym];o.rest=true;this.pend++;(side==="BUY"?b.bids:b.asks).push(o)}
+  this.us+=performance.now()-t;this.stamps.push(Date.now());return{ok:true,o}}
+ done(o,st){if(o.rest){o.rest=false;this.pend--}o.status=st;if(st==="FILLED")this.filled++;if(o.user!=="YOU")this.orders.delete(o.id);else this.you.delete(o.id)}
+ match(o){const b=this.books[o.sym],opp=o.side==="BUY"?b.asks:b.bids;
+  while(o.rem>0){let top=opp.peek();while(top&&!this.live(top)){opp.pop();top=opp.peek()}
+   if(!top||(o.side==="BUY"?top.price>o.price:top.price<o.price))break;
+   const q=Math.min(o.rem,top.rem),p=top.price;o.rem-=q;top.rem-=q;b.last=p;
+   const by=o.side==="BUY"?o:top,sl=o.side==="BUY"?top:o;
+   if(by.user==="YOU"){this.cash-=p*q;this.cost[o.sym]+=p*q;this.hold[o.sym]+=q}if(sl.user==="YOU"){this.cash+=p*q;this.cost[o.sym]-=this.cost[o.sym]/this.hold[o.sym]*q;this.hold[o.sym]-=q}if(by.user==="YOU")by.fv=(by.fv||0)+p*q;if(sl.user==="YOU")sl.fv=(sl.fv||0)+p*q;
+   this.trades.push({sym:o.sym,p,q,b:by.id,s:sl.id,t:Date.now(),y:by.user==="YOU"||sl.user==="YOU"});this.bs[o.sym].push(p);this.vol[o.sym]+=q;
+   this.log("EXECUTED",o,`${q} ${o.sym} @ ${f2(p)} (buy #${by.id}, sell #${sl.id})`);
+   if(top.user==="YOU")this.alerts.push(`Order #${top.id} ${top.rem?"part-filled":"filled"}: ${q} ${top.side==="BUY"?"bought":"sold"} ${o.sym} at ₹${f2(p)}`);top.status=top.rem?"PARTIAL":"OPEN";if(!top.rem){opp.pop();this.done(top,"FILLED")}o.status=o.rem?"PARTIAL":"OPEN"}
+  if(!o.rem)this.done(o,"FILLED")}
+ cancel(id){const o=this.orders.get(id);if(!o||!this.live(o))return false;const r=o.rem;this.done(o,"CANCELLED");this.log("CANCELLED",o,`${r} left of ${o.qty}`);return true}
+ modify(id,price,qty){const o=this.orders.get(id);if(!o||!this.live(o))return{ok:false,err:"Order is no longer open."};
+  const fl=o.qty-o.rem,nq=qty-fl;if(!Number.isInteger(qty)||nq<=0||!(price>0))return{ok:false,err:"New quantity must exceed the "+fl+" already filled."};
+  if(price===o.price&&nq<=o.rem){o.rem=nq;o.qty=qty;this.log("MODIFIED",o,`quantity now ${qty}, priority kept`);return{ok:true}}
+  const rv=this.reserved(o.sym);if(o.side==="BUY"?this.cash-(rv.c-o.price*o.rem)<price*nq:this.hold[o.sym]-(rv.s-o.rem)<nq)return{ok:false,err:"Not enough cash or shares for that change."};
+  this.cancel(id);const r=this.submit(o.sym,o.side,price,nq,"YOU");if(r.ok)this.log("MODIFIED",r.o,`re-queued from #${id}, priority reset`);return r}
+ levels(sym,side){const m=new Map();for(const o of this.books[sym][side==="BUY"?"bids":"asks"].a)if(this.live(o)){const e=m.get(o.price)||{p:o.price,q:0,n:0};e.q+=o.rem;e.n++;m.set(o.price,e)}
+  return[...m.values()].sort((a,b)=>side==="BUY"?b.p-a.p:a.p-b.p)}
+}
+let X=new Exchange();
+function seed(){for(const s of KEYS){let b=SYMS[s].p;for(let i=0;i<80;i++){b=r2(b*(1+(Math.random()-.5)*.008));X.bs[s].push(b)}X.books[s].last=b;for(let i=1;i<=12;i++){X.submit(s,"BUY",r2(b-i*b*.003),5+Math.floor(Math.random()*20),"BOT");X.submit(s,"SELL",r2(b+i*b*.003),5+Math.floor(Math.random()*20),"BOT")}}}
+function bot(){const s=KEYS[Math.floor(Math.random()*KEYS.length)],b=X.books[s],sd=Math.random()<.5?"BUY":"SELL",d=(Math.random()-.4)*b.last*.006;
+ X.submit(s,sd,Math.max(.05,r2(b.last+(sd==="BUY"?-1:1)*d)),1+Math.floor(Math.random()*25),"BOT")}
+seed();
+
+/* ===== Benchmark engines ===== */
+function stream(n){let s=12345;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296,a=[];for(let i=0;i<n;i++){const b=r()<.5;a.push({side:b,price:Math.round((b?90+r()*12:98+r()*12)*20)/20,qty:1+Math.floor(r()*20),seq:i})}return a}
+function runHeap(os){const B=new Heap(bidC),A=new Heap(askC);let t=0;for(const s of os){const o={...s,rem:s.qty},opp=o.side?A:B;
+ while(o.rem>0){const x=opp.peek();if(!x||(o.side?x.price>o.price:x.price<o.price))break;const q=Math.min(o.rem,x.rem);o.rem-=q;x.rem-=q;t++;if(!x.rem)opp.pop()}
+ if(o.rem>0)(o.side?B:A).push(o)}return t}
+function runArr(os){const B=[],A=[];let t=0;for(const s of os){const o={...s,rem:s.qty},opp=o.side?A:B;
+ while(o.rem>0){const x=opp[opp.length-1];if(!x||(o.side?x.price>o.price:x.price<o.price))break;const q=Math.min(o.rem,x.rem);o.rem-=q;x.rem-=q;t++;if(!x.rem)opp.pop()}
+ if(o.rem>0){const ar=o.side?B:A;let lo=0,hi=ar.length;while(lo<hi){const m=(lo+hi)>>1;if(o.side?ar[m].price<o.price:ar[m].price>o.price)lo=m+1;else hi=m}ar.splice(lo,0,o)}}return t}
+
+/* ===== Components ===== */
+function Spark({p,up}){const d=p.slice(-30);if(d.length<2)return html`<svg width="64" height="26"/>`;const lo=Math.min(...d),sp=(Math.max(...d)-lo)||1;
+ return html`<svg width="64" height="26" viewBox="0 0 64 26"><polyline fill="none" stroke=${up?"#16c784":"#ea3943"} strokeWidth="1.6" points=${d.map((v,i)=>`${i/(d.length-1)*64},${23-(v-lo)/sp*20}`).join(" ")}/></svg>`}
+
+function Candles({p}){const cs=[];for(let i=0;i<p.length;i+=4){const s=p.slice(i,i+4);cs.push({o:s[0],c:s[s.length-1],h:Math.max(...s),l:Math.min(...s)})}
+ if(cs.length<4)return html`<div className="empty">Waiting for trades. Start the market or place an order that crosses the spread.</div>`;
+ const hi=Math.max(...cs.map(c=>c.h)),lo=Math.min(...cs.map(c=>c.l)),sp=(hi-lo)||1,W=720,H=260,cw=(W-64)/cs.length,y=v=>12+(hi-v)/sp*(H-24),last=cs[cs.length-1].c;
+ return html`<svg className="chart" viewBox="0 0 720 260" role="img" aria-label="Candlestick chart of recent trades">
+  ${[0,1,2,3,4].map(i=>{const v=hi-sp*i/4;return html`<g key=${i}><line x1="0" x2="660" y1=${y(v)} y2=${y(v)} stroke="#1a1a1e"/><text x="668" y=${y(v)+4} fill="#85858d" fontSize="11" fontFamily="JetBrains Mono,monospace">${f2(v)}</text></g>`})}
+  ${cs.map((c,i)=>{const up=c.c>=c.o,col=up?"#16c784":"#ea3943",x=i*cw+cw/2;return html`<g key=${i}><line x1=${x} x2=${x} y1=${y(c.h)} y2=${y(c.l)} stroke=${col}/><rect x=${x-cw*.32} width=${cw*.64} y=${y(Math.max(c.o,c.c))} height=${Math.max(1.5,Math.abs(y(c.o)-y(c.c)))} fill=${col} rx="1"/></g>`})}
+  <line x1="0" x2="660" y1=${y(last)} y2=${y(last)} stroke="#ececee" strokeDasharray="3 4" opacity=".5"/>
+  <rect x="662" y=${y(last)-9} width="56" height="18" rx="4" fill="#ececee"/><text x="668" y=${y(last)+4} fill="#000" fontSize="11" fontWeight="600" fontFamily="JetBrains Mono,monospace">${f2(last)}</text></svg>`}
+
+function Book({sym,setPrice}){const mine=new Set([...X.you].map(i=>X.orders.get(i)).filter(o=>o.sym===sym).map(o=>o.price)),A=X.levels(sym,"SELL").slice(0,9).reverse(),B=X.levels(sym,"BUY").slice(0,9),mx=Math.max(1,...A.map(l=>l.q),...B.map(l=>l.q));
+ const row=(l,c)=>html`<div key=${l.p} className=${"bk m "+c} onClick=${()=>setPrice(l.p.toFixed(2))}><i style=${{width:l.q/mx*100+"%"}}/><span className=${c==="a"?"dn":"up"}>${f2(l.p)}</span><span>${l.q}</span><span className="mu">${mine.has(l.p)?"● you · ":""}${l.n}</span></div>`;
+ const sp=A.length&&B.length?A[A.length-1].p-B[0].p:null;
+ return html`<div className="card"><h3>Order book</h3><div className="bk h"><span>Price (₹)</span><span>Quantity</span><span>Orders</span></div>
+  ${A.map(l=>row(l,"a"))}<div className="mid"><b className="m">${f2(X.books[sym].last)}</b><span className="mu m">Spread ${sp==null?"-":f2(sp)}</span></div>${B.map(l=>row(l,"b"))}</div>`}
+
+function Ticket({sym,side,setSide,price,setPrice,qty,setQty,say,setTab}){
+ const [ty,setTy]=useState("LMT"),[rv,setRv]=useState(null),R=X.reserved(sym),bk=X.books[sym],opp=X.levels(sym,side==="BUY"?"SELL":"BUY")[0],
+  p=ty==="MKT"?(opp?r2(opp.p*(side==="BUY"?1.05:.95)):0):parseFloat(price),q=parseInt(qty,10),mx=Math.max(0,side==="BUY"?Math.floor((X.cash-R.c)/(p>0?p:bk.last)):X.hold[sym]-R.s);
+ const review=()=>{if(!(q>0))return say("Enter a whole-number quantity.",false);if(ty==="MKT"&&!opp)return say("Nobody is on the other side right now. Use a limit order.",false);if(!(p>0))return say("Enter a price above 0.",false);setRv({side,ty,p,q})};
+ const go=()=>{const r=X.submit(sym,side,p,q,"YOU",ty==="MKT");setRv(null);if(!r.ok)return say(r.err,false);const o=r.o,fl=o.qty-o.rem;
+  say(o.status==="FILLED"?`Order #${o.id} filled in full.`:o.status==="CANCELLED"?`Order #${o.id}: ${fl} filled, the rest was cancelled (no more shares within 5% of the price).`:fl?`Order #${o.id} part-filled: ${fl} traded, ${o.rem} waiting.`:`Order #${o.id} is waiting in the book at ₹${f2(o.price)}. You’ll get an alert when it fills.`,true);if(o.status==="OPEN"||o.status==="PARTIAL")setTab("orders")};
+ return html`<div className="card"><h3>${sym} · ${SYMS[sym].n}</h3>
+  <div className="seg" role="group" aria-label="Side"><button className="b" aria-pressed=${side==="BUY"} onClick=${()=>setSide("BUY")}>Buy</button><button className="s" aria-pressed=${side==="SELL"} onClick=${()=>setSide("SELL")}>Sell</button></div>
+  <div className="seg sm" role="group" aria-label="Order type"><button className="t" aria-pressed=${ty==="LMT"} onClick=${()=>setTy("LMT")}>Limit</button><button className="t" aria-pressed=${ty==="MKT"} onClick=${()=>setTy("MKT")}>Market</button></div>
+  <label className="f">${ty==="MKT"?"Price":"Limit price (₹)"}<input className="m" type="number" step="0.05" min="0.05" disabled=${ty==="MKT"} value=${ty==="MKT"?"":price} placeholder=${ty==="MKT"?"Best available":""} onChange=${e=>setPrice(e.target.value)} onKeyDown=${e=>e.key==="Enter"&&review()}/></label>
+  <label className="f">Quantity<input className="m" type="number" step="1" min="1" value=${qty} onChange=${e=>setQty(e.target.value)} onKeyDown=${e=>e.key==="Enter"&&review()}/></label>
+  <div className="chips">${[.25,.5,.75,1].map(f=>html`<button key=${f} onClick=${()=>setQty(String(Math.max(1,Math.floor(mx*f))))}>${f*100}%</button>`)}</div>
+  <div className="kv"><span>Estimated value</span><b className="m">₹${p>0&&q>0?f2(p*q):"0.00"}</b></div>
+  <div className="kv"><span>Max you can ${side==="BUY"?"buy":"sell"}</span><b className="m">${mx}</b></div>
+  <button className=${"go "+(side==="BUY"?"b":"s")} onClick=${review}>Review ${side==="BUY"?"buy":"sell"} order</button>
+  ${rv&&html`<div className="modal" role="dialog" aria-label="Confirm order" onClick=${()=>setRv(null)}><div className="mb" onClick=${e=>e.stopPropagation()}><h3>Confirm ${rv.side==="BUY"?"buy":"sell"} order</h3>
+   <div className="kv"><span>Stock</span><b>${sym}</b></div><div className="kv"><span>Type</span><b>${rv.ty==="MKT"?"Market (5% price protection)":"Limit"}</b></div>
+   <div className="kv"><span>Quantity</span><b className="m">${rv.q}</b></div><div className="kv"><span>${rv.ty==="MKT"?"Worst price":"Price"}</span><b className="m">₹${f2(rv.p)}</b></div><div className="kv"><span>Estimated value</span><b className="m">₹${f2(rv.p*rv.q)}</b></div>
+   <div className="row2"><button className="btn" onClick=${()=>setRv(null)}>Go back</button><button className=${"btn "} style=${{background:rv.side==="BUY"?"var(--g)":"var(--r)",color:rv.side==="BUY"?"#000":"#fff",borderColor:"transparent"}} onClick=${go}>Confirm ${rv.side==="BUY"?"buy":"sell"}</button></div></div></div>`}</div>`}
+
+function OrderRow({o,act}){const [p,setP]=useState(String(o.price)),[q,setQ]=useState(String(o.qty));
+ return html`<tr><td className="m">#${o.id}</td><td>${o.sym}</td><td className=${o.side==="BUY"?"up":"dn"}>${o.side}</td>
+  <td><input className="m" aria-label="New price" type="number" step="0.05" value=${p} onChange=${e=>setP(e.target.value)}/></td>
+  <td><input className="m" aria-label="New quantity" type="number" value=${q} onChange=${e=>setQ(e.target.value)}/></td>
+  <td className="m">${o.rem}</td><td><span className="pill">${o.status}</span></td>
+  <td><button className="btn" onClick=${()=>act("m",o.id,parseFloat(p),parseInt(q,10))}>Update</button> <button className="btn" onClick=${()=>act("c",o.id)}>Cancel</button></td></tr>`}
+
+function Bench(){const [res,setRes]=useState(null),[busy,setBusy]=useState(0);
+ const run=n=>{setBusy(n);setTimeout(()=>{const o=stream(n);let t=performance.now();const a=runHeap(o),h=performance.now()-t;t=performance.now();const c=runArr(o),s=performance.now()-t;setRes({n,h,s,a,c});setBusy(0)},40)};
+ const mx=res?Math.max(res.h,res.s):1;
+ return html`<div><p className="note">Sends the same random order stream through a heap engine and a sorted-array engine and compares the time taken.</p>
+  <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>${[10000,50000,150000].map(n=>html`<button key=${n} className="btn" disabled=${!!busy} onClick=${()=>run(n)}>${busy===n?"Running…":n.toLocaleString("en-IN")+" orders"}</button>`)}</div>
+  ${res&&html`<div style=${{marginTop:14}}><div className="kv"><span>Heap</span><b className="m up">${res.h.toFixed(1)} ms</b></div><div className="bar" style=${{background:"var(--g)",width:res.h/mx*100+"%"}}/>
+   <div className="kv"><span>Sorted array</span><b className="m dn">${res.s.toFixed(1)} ms</b></div><div className="bar" style=${{background:"var(--r)",width:res.s/mx*100+"%"}}/>
+   <p className="note">${res.n.toLocaleString("en-IN")} orders; ${res.a===res.c?res.a.toLocaleString("en-IN")+" trades in both engines, so the results match.":"trade counts differ."} Heap insert is O(log n), array insert shifts elements, O(n). Timings depend on your device.</p></div>`}</div>`}
+
+const DSA=[["Binary heap","One max-heap of buys and one min-heap of sells per stock; the top is the best price.","Insert O(log n), best price O(1)"],["Sequence number","Orders at the same price are ordered by arrival, so the earlier one matches first (FIFO).","O(1) per comparison"],["Hash map","Order ID to order record, used for cancel, modify and status.","O(1) average"],["Lazy deletion","A cancelled order is marked dead and dropped when it reaches the top of its heap.","Cancel O(1)"],["Circular buffer","The audit trail keeps the latest 2,000 events in fixed memory.","Add O(1)"],["Dynamic array","Executed trades and price history for charts and reports.","Append O(1) amortised"],["Sorted array","Baseline engine used only in the benchmark.","Insert O(n)"]];
+
+function AllOrders(){const L=[...X.orders.values()].filter(o=>o.user==="YOU").concat(X.yr).sort((a,b)=>b.id-a.id),SC={FILLED:"Complete",OPEN:"Open",PARTIAL:"Part-filled",CANCELLED:"Cancelled",REJECTED:"Rejected"};
+ if(!L.length)return html`<p className="note">No orders yet. Every order you place today will appear here with its status.</p>`;
+ return html`<table><thead><tr><th>Time</th><th>Order</th><th>Stock</th><th>Side</th><th>Filled / total</th><th>Order price</th><th>Avg price</th><th>Status</th></tr></thead><tbody>${L.map(o=>{const fl=o.qty-o.rem,col=o.status==="FILLED"?"up":o.status==="REJECTED"||o.status==="CANCELLED"?"dn":"";
+  return html`<tr key=${o.id}><td>${new Date(o.t).toLocaleTimeString("en-GB")}</td><td className="m">#${o.id}</td><td>${o.sym}</td><td className=${o.side==="BUY"?"up":"dn"}>${o.side}</td><td className="m">${o.status==="REJECTED"?"-":fl+" / "+o.qty}</td><td className="m">${f2(o.price)}</td><td className="m">${o.fv?f2(o.fv/fl):"-"}</td><td className=${col}>${SC[o.status]}${o.status==="REJECTED"&&o.why?html`<small className="mu"> · ${o.why}</small>`:""}</td></tr>`})}</tbody></table>`}
+function Tabs({tab,setTab,act,pick}){
+ const ids=[...X.you].sort((a,b)=>a-b).map(i=>X.orders.get(i)),T=[["hold","Holdings"],["all","Orders"],["orders","Open orders ("+ids.length+")"],["trades","Trade history"],["audit","Audit trail"],["bench","Benchmark"],["dsa","Data structures"]];
+ return html`<div className="card"><div className="tabs" role="tablist">${T.map(([k,l])=>html`<button key=${k} role="tab" aria-selected=${tab===k} onClick=${()=>setTab(k)}>${l}</button>`)}</div>
+  ${tab==="hold"&&html`<div className="wrap"><table><thead><tr><th>Stock</th><th>Qty</th><th>Avg cost</th><th>Last</th><th>Value</th><th>P&amp;L</th><th></th></tr></thead><tbody>${KEYS.filter(s=>X.hold[s]>0).map(s=>{const q=X.hold[s],ac=X.cost[s]/q,l=X.books[s].last,pl=(l-ac)*q;return html`<tr key=${s}><td><b>${s}</b></td><td className="m">${q}</td><td className="m">${f2(ac)}</td><td className="m">${f2(l)}</td><td className="m">₹${f2(q*l)}</td><td className=${"m "+(pl>=0?"up":"dn")}>${pl>=0?"+":"−"}₹${f2(Math.abs(pl))}</td><td><button className="btn" onClick=${()=>pick(s)}>Trade</button></td></tr>`})}</tbody></table></div>`}
+  ${tab==="all"&&html`<div className="wrap"><${AllOrders}/></div>`}
+  ${tab==="orders"&&(ids.length?html`<div className="wrap"><table><thead><tr><th>ID</th><th>Stock</th><th>Side</th><th>Price</th><th>Quantity</th><th>Left</th><th>Status</th><th></th></tr></thead><tbody>${ids.map(o=>html`<${OrderRow} key=${o.id} o=${o} act=${act}/>`)}</tbody></table></div>`:html`<p className="note">No open orders. A limit order that doesn’t match straight away will wait here, where you can update or cancel it.</p>`)}
+  ${tab==="trades"&&html`<div className="wrap"><table><thead><tr><th>Time</th><th>Stock</th><th>Price</th><th>Qty</th><th>Value</th><th>Buy</th><th>Sell</th><th>Yours</th></tr></thead><tbody>${X.trades.slice(-60).reverse().map((t,i)=>html`<tr key=${i}><td>${new Date(t.t).toLocaleTimeString("en-GB")}</td><td>${t.sym}</td><td className="m">${f2(t.p)}</td><td className="m">${t.q}</td><td className="m">₹${f2(t.p*t.q)}</td><td className="m">#${t.b}</td><td className="m">#${t.s}</td><td className="up">${t.y?"Yes":""}</td></tr>`)}</tbody></table></div>`}
+  ${tab==="audit"&&html`<div className="wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Order</th><th>Details</th></tr></thead><tbody>${X.audit.newest(60).map((e,i)=>html`<tr key=${i}><td>${e.t}</td><td className=${e.type==="EXECUTED"?"up":e.type==="REJECTED"||e.type==="CANCELLED"?"dn":""}>${e.type}</td><td className="m">#${e.id}</td><td>${e.d}</td></tr>`)}</tbody></table></div>`}
+  ${tab==="bench"&&html`<${Bench}/>`}
+  ${tab==="dsa"&&html`<div><div className="wrap"><table><thead><tr><th>Structure</th><th>How MatchX uses it</th><th>Cost</th></tr></thead><tbody>${DSA.map(r=>html`<tr key=${r[0]}><td><b>${r[0]}</b></td><td style=${{whiteSpace:"normal"}}>${r[1]}</td><td className="mu">${r[2]}</td></tr>`)}</tbody></table></div><p className="note">A buy and a sell trade when the best buy is at or above the best sell. The trade price is the older (resting) order’s price, and partial fills leave the remainder in the book.</p></div>`}</div>`}
+
+function Watch({sym,pick}){const [q,setQ]=useState(""),[f,setF]=useState("All");
+ let L=KEYS.map(s=>({s,c:(X.books[s].last-SYMS[s].p)/SYMS[s].p*100}));
+ if(f==="Gainers")L=L.filter(x=>x.c>0).sort((a,b)=>b.c-a.c);if(f==="Losers")L=L.filter(x=>x.c<0).sort((a,b)=>a.c-b.c);if(f==="Held")L=L.filter(x=>X.hold[x.s]>0);
+ if(q)L=L.filter(x=>(x.s+SYMS[x.s].n).toLowerCase().includes(q.toLowerCase()));
+ return html`<div className="card"><h3>Market · ${KEYS.length} stocks</h3><input className="search" placeholder="Search name or symbol" aria-label="Search stocks" value=${q} onChange=${e=>setQ(e.target.value)}/>
+  <div className="fl">${["All","Gainers","Losers","Held"].map(k=>html`<button key=${k} aria-pressed=${f===k} onClick=${()=>setF(k)}>${k}</button>`)}</div>
+  <div className="list">${L.length?L.map(({s,c})=>html`<button key=${s} className="wl" aria-pressed=${s===sym} onClick=${()=>pick(s)}><span><b>${s}</b><small>${SYMS[s].n}</small></span><${Spark} p=${X.bs[s]} up=${c>=0}/><span className="r m"><b>${f2(X.books[s].last)}</b><small className=${c>=0?"up":"dn"}>${c>=0?"+":""}${c.toFixed(2)}%</small></span></button>`):html`<p className="note">No stocks match.</p>`}</div></div>`}
+
+function Landing({enter}){return html`<div className="land"><div className="card lc"><div className="brand"><div className="logo"><div><i/><i/></div></div><div><b>MatchX</b><span>Order book simulator</span></div></div>
+ <h2>Demo account</h2><div className="mu">Practise trading with virtual money. Nothing here is real.</div>
+ <ul><li>Trader: Demo Trader (DEMO-1001)</li><li>Virtual cash: ₹10,00,000</li><li>Starting portfolio: ${HOLD0.length} stocks, 50 to 70 shares each</li><li>${KEYS.length} listed stocks, live simulated market</li><li>Buy and sell with limit or market orders</li></ul>
+ <button className="go b" onClick=${enter}>Enter demo account</button><p className="note" style=${{marginTop:14}}>Company names are used for realism. Prices are illustrative and simulated.</p></div></div>`}
+
+function App(){
+ const [,tick]=useReducer(x=>x+1,0),[user,setUser]=useState(false),[sym,setSym]=useState(KEYS[0]),[side,setSide]=useState("BUY"),[price,setPrice]=useState(X.books[KEYS[0]].last.toFixed(2)),[qty,setQty]=useState("10"),
+  [on,setOn]=useState(true),[spd,setSpd]=useState(25),[tab,setTab]=useState("hold"),[toast,setToast]=useState(null),[gen,setGen]=useState(0),[cf,setCf]=useState(false),acc=useRef(0),tm=useRef();
+ useEffect(()=>{if(!user)return;const id=setInterval(()=>{if(on){acc.current+=spd/5;while(acc.current>=1){bot();acc.current--}}tick()},200);return()=>clearInterval(id)},[on,spd,user]);
+ if(!user)return html`<${Landing} enter=${()=>setUser(true)}/>`;
+ const say=(t,ok)=>{setToast({t,ok});clearTimeout(tm.current);tm.current=setTimeout(()=>setToast(null),4500)};
+ if(X.alerts.length){const a=X.alerts.splice(0);setTimeout(()=>say(a.length>1?a.length+" fills on your orders. Latest: "+a[a.length-1]:a[0],true),0)}
+ const act=(k,id,p,q)=>{if(k==="c"){X.cancel(id);say("Order #"+id+" cancelled.",true)}else{const r=X.modify(id,p,q);say(r.ok?"Order updated.":r.err,r.ok)}tick()};
+ const pick=s=>{setSym(s);setPrice(X.books[s].last.toFixed(2))};
+ const reset=()=>{X=new Exchange();seed();acc.current=0;setSym(KEYS[0]);setPrice(X.books[KEYS[0]].last.toFixed(2));setSide("BUY");setQty("10");setTab("hold");setOn(true);setCf(false);setGen(gen+1);say("Simulator reset. Your account is back to ₹10,00,000 cash and a fresh portfolio.",true)};
+ const now=Date.now();while(X.stamps.length&&X.stamps[0]<now-1000)X.stamps.shift();
+ const bk=X.books[sym],pr=X.bs[sym],ch=(bk.last-SYMS[sym].p)/SYMS[sym].p*100,hi=Math.max(...pr),lo=Math.min(...pr),nw=X.worth(),pl=nw-X.w0,R=X.reserved(sym),
+  idx=KEYS.reduce((s,k)=>s+X.books[k].last/SYMS[k].p,0)/KEYS.length*1000;
+ return html`<div>
+  <div className="tape" aria-hidden="true"><div>${[0,1].map(k=>KEYS.map(s=>{const c=(X.books[s].last-SYMS[s].p)/SYMS[s].p*100;return html`<span key=${k+s} className="m">${s} <b className=${c>=0?"up":"dn"}>${f2(X.books[s].last)} ${c>=0?"▲":"▼"}${Math.abs(c).toFixed(2)}%</b></span>`}))}</div></div>
+  <header className="nav"><div className="brand"><div className="logo"><div><i/><i/></div></div><div><b>MatchX</b><span>Order book simulator</span></div></div>
+   <div className="kpi"><span>MX60 index</span><b className=${"m "+(idx>=1000?"up":"dn")}>${f2(idx)}</b></div>
+   <div className=${"live "+(on?"":"off")}><i/>${on?"Market live":"Market paused"}</div>
+   <div className="ctrl"><button className="btn" onClick=${()=>setOn(!on)}>${on?"Pause":"Start"} market</button>
+    <label className="mu" style=${{fontSize:12,display:"flex",alignItems:"center",gap:8}}>Speed<input type="range" min="1" max="80" value=${spd} onChange=${e=>setSpd(+e.target.value)} aria-label="Orders per second"/><span className="m">${spd}/s</span></label>
+    <button className="btn" onClick=${()=>{if(cf)reset();else{setCf(true);setTimeout(()=>setCf(false),4000)}}} style=${cf?{borderColor:"var(--r)",color:"var(--r)"}:null}>${cf?"Confirm reset":"Reset"}</button></div>
+   <div className="kpis">${[["Orders/sec",X.stamps.length],["Trades",X.trades.length],["Pending",X.pend],["Fill rate",X.acc?(X.filled/X.acc*100).toFixed(1)+"%":"0%"]].map(([k,v])=>html`<div className="kpi" key=${k}><span>${k}</span><b className="m">${v}</b></div>`)}
+    <div className="kpi"><span>Demo Trader</span><b><button className="btn" style=${{padding:"2px 10px"}} onClick=${()=>setUser(false)}>Exit demo</button></b></div></div></header>
+  <div className="app">
+   <div className="col"><${Watch} sym=${sym} pick=${pick}/></div>
+   <div className="col" key=${"c"+gen}>
+    <div className="card"><div className="hd" style=${{margin:0}}>
+     <div className="kpi"><span>Account value</span><b className="big m">₹${f2(nw)}</b></div>
+     <div className="kpi"><span>Profit / loss since start</span><b className=${"m "+(pl>=0?"up":"dn")}>${pl>=0?"+":"−"}₹${f2(Math.abs(pl))}</b></div>
+     <div className="kpi"><span>Cash</span><b className="m">₹${f2(X.cash)}</b></div><div className="kpi"><span>Free cash</span><b className="m">₹${f2(X.cash-X.reserved(sym).c)}</b></div><div className="kpi"><span>Holdings</span><b className="m">₹${f2(nw-X.cash)}</b></div></div></div>
+    <div className="card"><div className="hd"><div><span className="mu">${SYMS[sym].n} (${sym})</span><div className="big m">₹${f2(bk.last)}</div></div>
+     <div className="kpi"><span>Change</span><b className=${"m "+(ch>=0?"up":"dn")}>${ch>=0?"+":""}${ch.toFixed(2)}%</b></div>
+     <div className="kpi"><span>High</span><b className="m">${f2(hi)}</b></div><div className="kpi"><span>Low</span><b className="m">${f2(lo)}</b></div><div className="kpi"><span>You hold</span><b className="m">${X.hold[sym]}</b></div></div>
+     <${Candles} p=${pr.slice(-200)}/></div>
+    <${Tabs} tab=${tab} setTab=${setTab} act=${act} pick=${pick}/>
+   </div>
+   <div className="col" key=${"r"+gen}><${Book} sym=${sym} setPrice=${setPrice}/><${Ticket} sym=${sym} side=${side} setSide=${setSide} price=${price} setPrice=${setPrice} qty=${qty} setQty=${setQty} say=${say} setTab=${setTab}/></div>
+  </div>
+  ${toast&&html`<div className=${"toast"+(toast.ok?"":" err")} role="status">${toast.t}</div>`}</div>`}
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
+</script>
+</body>
+</html>
